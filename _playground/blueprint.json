@@ -1,13 +1,33 @@
 {
 	"landingPage": "/wp-admin/plugin-install.php?tab=popular",
 	"preferredVersions": {
-		"php": "8.0",
-		"wp": "beta"
+		"php": "latest",
+		"wp": "latest"
 	},
 	"features": {
 		"networking": true
 	},
 	"steps": [
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "wordpress.org/plugins",
+				"slug": "akismet"
+			},
+			"options": {
+				"activate": false
+			}
+		},
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "wordpress.org/plugins",
+				"slug": "wordpress-importer"
+			},
+			"options": {
+				"activate": true
+			}
+		},
 		{
 			"step": "installPlugin",
 			"pluginData": {
