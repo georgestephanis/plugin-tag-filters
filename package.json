@@ -4,14 +4,14 @@
 	"description": "A plugin to customize the Plugins interface enabling tag-based filtering.",
 	"author": "George Stephanis",
 	"license": "GPL-2.0-or-later",
-    "keywords": [
-        "WordPress",
-        "Plugins",
-        "Plugin Management"
-    ],
-    "homepage": "https://app.codeable.io/tasks/209745/workroom",
-    "repository": "https://github.com/georgestephanis/plugin-tag-filters",
-    "bugs": "https://github.com/georgestephanis/plugin-tag-filters/issues",
+	"keywords": [
+		"WordPress",
+		"Plugins",
+		"Plugin Management"
+	],
+	"homepage": "https://app.codeable.io/tasks/209745/workroom",
+	"repository": "https://github.com/georgestephanis/plugin-tag-filters",
+	"bugs": "https://github.com/georgestephanis/plugin-tag-filters/issues",
 	"files": [
 		"plugin-tag-filters.php",
 		"src",
