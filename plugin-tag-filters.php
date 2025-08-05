@@ -21,17 +21,24 @@ namespace PluginTagFilters;
  */
 function on_init() {
 	add_action( 'install_plugins_table_header', __NAMESPACE__ . '\install_plugins_table_header' );
-	add_action( 'load-plugin-install.php', __NAMESPACE__ . '\add_styles_to_admin' );
+	add_action( 'load-plugin-install.php', __NAMESPACE__ . '\add_plugin_install_screen_assets' );
+	add_action( 'load-plugins.php', __NAMESPACE__ . '\add_plugin_screen_assets' );
 	add_filter( 'plugins_api_result', __NAMESPACE__ . '\filter_plugins_api_result', 10, 3 );
+
+	add_action( 'manage_plugins_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
+	add_action( 'manage_plugins-network_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
+	add_action( 'manage_plugins_custom_column', __NAMESPACE__ . '\action_manage_plugins_custom_column', 10, 2 );
+
+	add_filter( 'plugins_list', __NAMESPACE__ . '\filter_plugins_list' );
 }
 add_action ( 'init', __NAMESPACE__ . '\on_init' );
 
 /**
- * Add in our additional styles to the wp-admin stylesheets.
+ * Add in our additional styles to the plugin-install.php screen
  *
  * @return void
  */
-function add_styles_to_admin() {
+function add_plugin_install_screen_assets() {
 	$asset_file = include( plugin_dir_path( __FILE__ ) . 'build/index.asset.php');
 
 	wp_enqueue_script(
@@ -41,6 +48,23 @@ function add_styles_to_admin() {
 		$asset_file['version'],
 		true
 	);
+
+	wp_enqueue_style(
+		'plugin-tag-filters',
+		plugins_url( 'build/index.css', __FILE__ ),
+		array(),
+		$asset_file['version']
+	);
+	wp_style_add_data( 'plugin-tag-filters', 'rtl', 'replace' );
+}
+
+/**
+ * Add in our additional styles to the plugins.php screen
+ *
+ * @return void
+ */
+function add_plugin_screen_assets() {
+	$asset_file = include( plugin_dir_path( __FILE__ ) . 'build/index.asset.php');
 
 	wp_enqueue_style(
 		'plugin-tag-filters',
@@ -124,8 +148,6 @@ function filter_manage_plugins_columns( $columns ) {
 
     return $columns;
 }
-add_action( 'manage_plugins_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
-add_action( 'manage_plugins-network_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
 
 /**
  * Display a column with the plugin's known tags.
@@ -144,13 +166,25 @@ function action_manage_plugins_custom_column( $column_name, $plugin_file ) {
 		}
 	}
 }
-add_action( 'manage_plugins_custom_column', __NAMESPACE__ . '\action_manage_plugins_custom_column', 10, 2 );
 
+/**
+ * Generate the link for the installed plugins tag list.  Handle active class as needed.
+ *
+ * @param string $tag The tag name.
+ *
+ * @return string The html link for the tag.
+ */
 function linkify_tag( $tag ) {
+	$class = '';
+	if ( isset( $_GET['tag'] ) && ( $_GET['tag'] === $tag ) ) {
+		$class = 'active';
+	}
+
 	return sprintf(
-		'<a href="%2$s">%1$s</a>',
+		'<a href="%2$s" class="%3$s">%1$s</a>',
 		esc_html( $tag ),
-		esc_url( add_query_arg( 'tag', $tag ) )
+		esc_url( 'active' === $class ? remove_query_arg( 'tag' ) : add_query_arg( 'tag', $tag ) ),
+		esc_attr( $class )
 	);
 }
 
@@ -185,4 +219,24 @@ function get_plugin_tags( $plugin ) {
 	// @todo: Add something to parse the `keywords` out of a `package.json` if it exists?
 
 	return null;
+}
+
+/**
+ * Filters the array of plugins for the list table.
+ *
+ * @param array[] $plugins An array of arrays of plugin data, keyed by context.
+ */
+function filter_plugins_list( $plugins ) {
+	if ( isset( $_GET['tag'] ) ) {
+		$tag = $_GET['tag'];
+		foreach ( $plugins as &$plugins_list ) {
+			foreach ( $plugins_list as $plugin => $properties ) {
+				$tags = get_plugin_tags( $plugin );
+				if ( ! $tags || ! in_array( $tag, $tags ) ) {
+					unset( $plugins_list[ $plugin ] );
+				}
+			}
+		}
+	}
+	return $plugins;
 }
