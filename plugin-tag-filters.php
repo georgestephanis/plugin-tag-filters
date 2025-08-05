@@ -114,3 +114,75 @@ function install_plugins_table_header() {
 	</ul>
 	<?php
 }
+
+function filter_manage_plugins_columns( $columns ) {
+    $columns = array_merge(
+		array_slice( $columns, 0, 2 ),
+		[ 'tags' => __( 'Tags' ) ],
+		array_slice( $columns, 2 )
+	);
+
+    return $columns;
+}
+add_action( 'manage_plugins_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
+add_action( 'manage_plugins-network_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
+
+/**
+ * Display a column with the plugin's known tags.
+ *
+ * @param string $column_name Name of the column.
+ * @param string $plugin_file Path to the plugin file relative to the plugins directory.
+ *
+ * @return void
+ */
+function action_manage_plugins_custom_column( $column_name, $plugin_file ) {
+	if ( 'tags' === $column_name ) {
+		$tags = get_plugin_tags( $plugin_file );
+		if ( $tags && is_array( $tags ) ) {
+			$tags = array_map( __NAMESPACE__ . '\linkify_tag', $tags );
+			echo implode( ', ', $tags );
+		}
+	}
+}
+add_action( 'manage_plugins_custom_column', __NAMESPACE__ . '\action_manage_plugins_custom_column', 10, 2 );
+
+function linkify_tag( $tag ) {
+	return sprintf(
+		'<a href="%2$s">%1$s</a>',
+		esc_html( $tag ),
+		esc_url( add_query_arg( 'tag', $tag ) )
+	);
+}
+
+/**
+ * Check for plugin tags if there's a readme.txt file.
+ *
+ * @link https://developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/
+ *
+ * @param string $plugin The plugin file -- for example, `akismet/akismet.php`.
+ *
+ * @return mixed Either an array of tags, or something false-y.
+ */
+function get_plugin_tags( $plugin ) {
+	$readme_file = WP_PLUGIN_DIR . '/' . dirname( $plugin ) . '/readme.txt';
+
+	if ( file_exists( $readme_file ) ) {
+		$readme_headers = get_file_data(
+			$readme_file,
+			array(
+				'tags' => 'Tags',
+			),
+			'plugin'
+		);
+
+		if ( $readme_headers['tags'] ) {
+			$tags = explode( ',', $readme_headers['tags'] );
+			return array_map( 'trim', $tags );
+		}
+		return false;
+	}
+
+	// @todo: Add something to parse the `keywords` out of a `package.json` if it exists?
+
+	return null;
+}
