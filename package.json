@@ -1,0 +1,40 @@
+{
+	"name": "plugin-tag-filters",
+	"version": "0.1.0",
+	"description": "A plugin to customize the Plugins interface enabling tag-based filtering.",
+	"author": "George Stephanis",
+	"license": "GPL-2.0-or-later",
+    "keywords": [
+        "WordPress",
+        "Plugins",
+        "Plugin Management"
+    ],
+    "homepage": "https://app.codeable.io/tasks/209745/workroom",
+    "repository": "https://github.com/georgestephanis/plugin-tag-filters",
+    "bugs": "https://github.com/georgestephanis/plugin-tag-filters/issues",
+	"files": [
+		"plugin-tag-filters.php",
+		"src",
+		"build",
+		"languages",
+		"package.json"
+	],
+	"main": "build/index.js",
+	"devDependencies": {
+		"@wordpress/scripts": "^30.20.0",
+		"copyfiles": "^2.4.1",
+		"npm-run-all": "^4.1.5"
+	},
+	"scripts": {
+		"build": "wp-scripts build",
+		"format": "wp-scripts format",
+		"lint": "npm-run-all --sequential lint:**",
+		"lint:pkg-json": "wp-scripts lint-pkg-json",
+		"lint:readme-md": "wp-scripts lint-md-docs README.md",
+		"lint:css": "wp-scripts lint-style",
+		"lint:js": "wp-scripts lint-js",
+		"packages-update": "wp-scripts packages-update --dist-tag=latest",
+		"plugin-zip": "wp-scripts plugin-zip && copyfiles --verbose plugin-tag-filters.zip _playground/ && rm plugin-tag-filters.zip",
+		"start": "wp-scripts start"
+	}
+}

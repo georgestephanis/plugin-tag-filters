@@ -1,0 +1,27 @@
+{
+	"landingPage": "/wp-admin/plugin-install.php?tab=popular",
+	"preferredVersions": {
+		"php": "8.0",
+		"wp": "beta"
+	},
+	"features": {
+		"networking": true
+	},
+	"steps": [
+		{
+			"step": "installPlugin",
+			"pluginZipFile": {
+				"resource": "url",
+				"url": "https://raw.githubusercontent.com/georgestephanis/plugin-tag-filters/trunk/_playground/plugin-tag-filters.zip"
+			},
+			"options": {
+				"activate": true
+			}
+		},
+		{
+			"step": "login",
+			"username": "admin",
+			"password": "password"
+		}
+	]
+}

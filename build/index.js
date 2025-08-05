@@ -1,0 +1,1 @@
+(()=>{"use strict";console.log("in plugin-install.jsx")})();
