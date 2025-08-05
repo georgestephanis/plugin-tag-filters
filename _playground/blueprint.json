@@ -13,9 +13,6 @@
 			"pluginData": {
 				"resource": "wordpress.org/plugins",
 				"slug": "akismet"
-			},
-			"options": {
-				"activate": false
 			}
 		},
 		{
