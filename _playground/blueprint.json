@@ -10,7 +10,7 @@
 	"steps": [
 		{
 			"step": "installPlugin",
-			"pluginZipFile": {
+			"pluginData": {
 				"resource": "url",
 				"url": "https://raw.githubusercontent.com/georgestephanis/plugin-tag-filters/trunk/_playground/plugin-tag-filters.zip"
 			},
