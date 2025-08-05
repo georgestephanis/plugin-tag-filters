@@ -61,22 +61,26 @@ function add_styles_to_admin() {
  * @param object          $args   Plugin API arguments.
  */
 function filter_plugins_api_result( $res, $action, $args ) {
-	$tags = array();
+	global $ptf_plugin_result_tags;
 
-	foreach ( $res->plugins as $plugin ) {
-		$slug = $plugin['slug'];
-		if ( $plugin['tags'] && is_array( $plugin['tags'] ) ) {
-			foreach ( $plugin['tags'] as $tag ) {
-				$tags[ $tag ][] = $slug;
-			}
-		} else {
-			$tags['untagged'][] = $slug;
+	if ( ! empty( $res->plugins ) && is_array( $res->plugins ) ) {
+		if ( ! is_array( $ptf_plugin_result_tags ) ) {
+			$ptf_plugin_result_tags = array();
 		}
+
+		foreach ( $res->plugins as $plugin ) {
+			$slug = $plugin['slug'];
+			if ( $plugin['tags'] && is_array( $plugin['tags'] ) ) {
+				foreach ( $plugin['tags'] as $tag ) {
+					$ptf_plugin_result_tags[ $tag ][] = $slug;
+				}
+			} else {
+				$ptf_plugin_result_tags['untagged'][] = $slug;
+			}
+		}
+
+		ksort( $ptf_plugin_result_tags );
 	}
-
-	ksort( $tags );
-
-	$GLOBALS['ptf_plugin_result_tags'] = $tags;
 
 	return $res;
 }
@@ -88,12 +92,22 @@ function filter_plugins_api_result( $res, $action, $args ) {
  */
 function install_plugins_table_header() {
 	global $ptf_plugin_result_tags;
+
+	if ( empty( $ptf_plugin_result_tags ) || ! is_array( $ptf_plugin_result_tags ) ) {
+		return;
+	}
+
 	?>
 	<ul class="plugin-table-tag-filters">
 		<?php
 		foreach ( $ptf_plugin_result_tags as $tag => $plugin_slugs ) {
 			if ( ( 'untagged' === $tag ) || count( $plugin_slugs ) > 1 ) {
-				printf( '<li><a href="javascript:;">%1$s (%2$d)</a></li>', esc_html( $tag ), count( $plugin_slugs ) );
+				printf(
+					'<li><a data-slugs="%3$s" href="javascript:;">%1$s (%2$d)</a></li>',
+					esc_html( $tag ),
+					count( $plugin_slugs ),
+					esc_attr( wp_json_encode( $plugin_slugs ) )
+				);
 			}
 		}
 		?>
