@@ -168,6 +168,27 @@ function action_manage_plugins_custom_column( $column_name, $plugin_file ) {
 }
 
 /**
+ * Add in a tagged view, if we're filtering by tag.
+ *
+ * @param string[] $views An array of available list table views.
+ */
+function views_plugins( $views ) {
+	if ( isset( $_GET['plugin_status'], $_GET['tag'] ) && 'tagged' === $_GET['plugin_status'] ) {
+		$tag = $_GET['tag'];
+
+		$views['all'] = str_replace( ' class="current" aria-current="page"', '', $views['all'] );
+
+		$views['tagged'] = sprintf(
+			'<a href="%2$s" class="current" aria-current="page">Tagged <span class="count">(%1$s)</span></a>',
+			esc_html( $tag ),
+			esc_url( add_query_arg( array( 'plugin_status' => 'tagged', 'tag' => $tag ) ) )
+		);
+	}
+	return $views;
+}
+add_action( 'views_plugins', __NAMESPACE__ . '\views_plugins' );
+
+/**
  * Generate the link for the installed plugins tag list.  Handle active class as needed.
  *
  * @param string $tag The tag name.
@@ -180,10 +201,17 @@ function linkify_tag( $tag ) {
 		$class = 'active';
 	}
 
+	$url = null;
+	if ( 'active' === $class ) {
+		$url = remove_query_arg( array( 'plugin_status', 'tag' ) );
+	} else {
+		$url = add_query_arg( array( 'plugin_status' => 'tagged', 'tag' => $tag ) );
+	}
+
 	return sprintf(
 		'<a href="%2$s" class="%3$s">%1$s</a>',
 		esc_html( $tag ),
-		esc_url( 'active' === $class ? remove_query_arg( 'tag' ) : add_query_arg( 'tag', $tag ) ),
+		esc_url( $url ),
 		esc_attr( $class )
 	);
 }
@@ -227,14 +255,15 @@ function get_plugin_tags( $plugin ) {
  * @param array[] $plugins An array of arrays of plugin data, keyed by context.
  */
 function filter_plugins_list( $plugins ) {
-	if ( isset( $_GET['tag'] ) ) {
-		$tag = $_GET['tag'];
-		foreach ( $plugins as &$plugins_list ) {
-			foreach ( $plugins_list as $plugin => $properties ) {
-				$tags = get_plugin_tags( $plugin );
-				if ( ! $tags || ! in_array( $tag, $tags ) ) {
-					unset( $plugins_list[ $plugin ] );
-				}
+	global $status;
+	if ( isset( $_GET['plugin_status'], $_GET['tag'] ) && 'tagged' === $_GET['plugin_status'] ) {
+		$status            = 'tagged';
+		$tag               = $_GET['tag'];
+		$plugins['tagged'] = array();
+		foreach ( $plugins['all'] as $plugin => $properties ) {
+			$tags = get_plugin_tags( $plugin );
+			if ( $tags && in_array( $tag, $tags ) ) {
+				$plugins['tagged'][ $plugin ] = $properties;
 			}
 		}
 	}
