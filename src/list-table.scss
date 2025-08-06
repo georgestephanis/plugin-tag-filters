@@ -21,19 +21,20 @@
 }
 
 // Plugin install:
-#plugin-filter {
+.plugin-install #the-list {
+	gap: 16px 8px;
 
-	#the-list {
+	.plugin-card {
+		display: flex;
+		flex-direction: column;
+		margin: 0;
 
-		&.filtered {
-
-			.plugin-card {
-				display: none;
-
-				&.filtered__show {
-					display: block;
-				}
-			}
+		.plugin-card-top {
+			flex-grow: 1;
 		}
+	}
+
+	&.filtered .plugin-card:not(.filtered__show) {
+		display: none;
 	}
 }
