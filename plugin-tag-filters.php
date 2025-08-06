@@ -181,7 +181,7 @@ function views_plugins( $views ) {
 		$views['tagged'] = sprintf(
 			'<a href="%2$s" class="current" aria-current="page">Tagged <span class="count">(%1$s)</span></a>',
 			esc_html( $tag ),
-			esc_url( add_query_arg( array( 'plugin_status' => 'tagged', 'tag' => $tag ) ) )
+			esc_url( add_query_arg( array( 'plugin_status' => 'tagged', 'tag' => $tag ), admin_url( 'plugins.php' ) ) )
 		);
 	}
 	return $views;
@@ -205,7 +205,7 @@ function linkify_tag( $tag ) {
 	if ( 'active' === $class ) {
 		$url = remove_query_arg( array( 'plugin_status', 'tag' ) );
 	} else {
-		$url = add_query_arg( array( 'plugin_status' => 'tagged', 'tag' => $tag ) );
+		$url = add_query_arg( array( 'plugin_status' => 'tagged', 'tag' => $tag ), admin_url( 'plugins.php' ) );
 	}
 
 	return sprintf(
