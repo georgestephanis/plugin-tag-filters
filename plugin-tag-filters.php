@@ -197,7 +197,7 @@ add_action( 'views_plugins', __NAMESPACE__ . '\views_plugins' );
  */
 function linkify_tag( $tag ) {
 	$class = '';
-	if ( isset( $_GET['tag'] ) && ( $_GET['tag'] === $tag ) ) {
+	if ( isset( $_GET['tag'] ) && ( normalize_tag( $_GET['tag'] ) === normalize_tag( $tag ) ) ) {
 		$class = 'active';
 	}
 
@@ -217,6 +217,58 @@ function linkify_tag( $tag ) {
 }
 
 /**
+ * Normalize plugin tags to account for variances in spelling or usage before comparison.
+ */
+function normalize_tag( $tag ) {
+	$raw = $tag;
+	$tag = strtolower( preg_replace( '/[\W]/', '', $raw ) );
+
+	switch ( $tag ) {
+		case 'searchengine':
+		case 'searchengineoptimization':
+			$tag = 'seo';
+			break;
+		case 'firewall':
+		case 'malware':
+		case 'login':
+		case '2fa':
+		case 'twofactor':
+			$tag = 'security';
+			break;
+		case 'cache':
+		case 'caching':
+		case 'speed':
+		case 'optimization':
+		case 'minify':
+			$tag = 'performance';
+			break;
+		case 'woo':
+		case 'woocommerce':
+			$tag = 'woo';
+			break;
+		case 'shop':
+		case 'cart':
+		case 'store':
+			$tag = 'ecommerce';
+			break;
+		case 'schedule':
+		case 'booking':
+		case 'appointment':
+		case 'calendar':
+		case 'events':
+			$tag = 'event';
+			break;
+	}
+
+	/**
+	 * Give plugins a chance to review the normalization we've done, and apply their own overrides.
+	 */
+	apply_filters( 'normalize_plugin_tag', $tag, $raw );
+
+	return $tag;
+}
+
+/**
  * Check for plugin tags if there's a readme.txt file.
  *
  * @link https://developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/
@@ -227,7 +279,6 @@ function linkify_tag( $tag ) {
  */
 function get_plugin_tags( $plugin ) {
 	$readme_file = WP_PLUGIN_DIR . '/' . dirname( $plugin ) . '/readme.txt';
-
 	if ( file_exists( $readme_file ) ) {
 		$readme_headers = get_file_data(
 			$readme_file,
@@ -244,7 +295,14 @@ function get_plugin_tags( $plugin ) {
 		return false;
 	}
 
-	// @todo: Add something to parse the `keywords` out of a `package.json` if it exists?
+	$package_json = WP_PLUGIN_DIR . '/' . dirname( $plugin ) . '/package.json';
+	if ( file_exists( $package_json ) ) {
+		$package_headers = json_decode( file_get_contents( $package_json ) );
+
+		if ( ! empty( $package_headers->keywords ) ) {
+			return array_map( 'trim', (array) $package_headers->keywords );
+		}
+	}
 
 	return null;
 }
@@ -258,12 +316,15 @@ function filter_plugins_list( $plugins ) {
 	global $status;
 	if ( isset( $_GET['plugin_status'], $_GET['tag'] ) && 'tagged' === $_GET['plugin_status'] ) {
 		$status            = 'tagged';
-		$tag               = $_GET['tag'];
+		$tag               = normalize_tag( $_GET['tag'] );
 		$plugins['tagged'] = array();
 		foreach ( $plugins['all'] as $plugin => $properties ) {
 			$tags = get_plugin_tags( $plugin );
-			if ( $tags && in_array( $tag, $tags ) ) {
-				$plugins['tagged'][ $plugin ] = $properties;
+			if ( $tags ) {
+				$tags = array_map( __NAMESPACE__ . '\normalize_tag', $tags );
+				if ( in_array( $tag, $tags ) ) {
+					$plugins['tagged'][ $plugin ] = $properties;
+				}
 			}
 		}
 	}
