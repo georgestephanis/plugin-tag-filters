@@ -1,12 +1,12 @@
 import './list-table.scss';
 
-const pluginTableTagFiltersList = document.querySelector(
-	'.plugin-table-tag-filters'
+const pluginFilterForm = document.getElementById(
+	'plugin-filter'
 );
-const pluginsList = document.getElementById( 'the-list' );
 
-pluginTableTagFiltersList.addEventListener( 'click', ( event ) => {
+const setupFilterListeners = ( event ) => {
 	const filterLink = event.target;
+	const pluginsList = pluginFilterForm.querySelector( '#the-list' );
 
 	if ( filterLink.dataset.slugs ) {
 		event.preventDefault();
@@ -20,7 +20,7 @@ pluginTableTagFiltersList.addEventListener( 'click', ( event ) => {
 				);
 		} else {
 			const previouslyActive =
-				pluginTableTagFiltersList.querySelector( '.active' );
+				pluginFilterForm.querySelector( '.plugin-table-tag-filters .active' );
 			if ( previouslyActive ) {
 				previouslyActive.classList.remove( 'active' );
 				pluginsList.classList.remove( 'filtered' );
@@ -45,10 +45,14 @@ pluginTableTagFiltersList.addEventListener( 'click', ( event ) => {
 				.forEach( ( item ) => item.classList.add( 'filtered__show' ) );
 		}
 	}
-} );
+};
 
-pluginTableTagFiltersList.addEventListener( 'keydown', ( event ) => {
-	if ( event.code === 'Space' || event.code === 'Enter' ) {
-		event.target.click();
+pluginFilterForm.addEventListener( 'click', setupFilterListeners );
+
+pluginFilterForm.addEventListener( 'keydown', ( event ) => {
+	if ( event.target.dataset.slugs ) {
+		if ( event.code === 'Space' || event.code === 'Enter' ) {
+			event.target.click();
+		}
 	}
 } );
