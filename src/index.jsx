@@ -1,8 +1,6 @@
 import './list-table.scss';
 
-const pluginFilterForm = document.getElementById(
-	'plugin-filter'
-);
+const pluginFilterForm = document.getElementById( 'plugin-filter' );
 
 const setupFilterListeners = ( event ) => {
 	const filterLink = event.target;
@@ -19,8 +17,9 @@ const setupFilterListeners = ( event ) => {
 					item.classList.remove( 'filtered__show' )
 				);
 		} else {
-			const previouslyActive =
-				pluginFilterForm.querySelector( '.plugin-table-tag-filters .active' );
+			const previouslyActive = pluginFilterForm.querySelector(
+				'.plugin-table-tag-filters .active'
+			);
 			if ( previouslyActive ) {
 				previouslyActive.classList.remove( 'active' );
 				pluginsList.classList.remove( 'filtered' );

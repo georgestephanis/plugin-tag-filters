@@ -10,6 +10,8 @@
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       plugin-tag-filters
  * Domain Path:       /languages
+ *
+ * @package PluginTagFilters
  */
 
 namespace PluginTagFilters;
@@ -23,7 +25,7 @@ function on_init() {
 	add_action( 'install_plugins_table_header', __NAMESPACE__ . '\install_plugins_table_header' );
 	add_action( 'load-plugin-install.php', __NAMESPACE__ . '\add_plugin_install_screen_assets' );
 	add_action( 'load-plugins.php', __NAMESPACE__ . '\add_plugin_screen_assets' );
-	add_filter( 'plugins_api_result', __NAMESPACE__ . '\filter_plugins_api_result', 10, 3 );
+	add_filter( 'plugins_api_result', __NAMESPACE__ . '\filter_plugins_api_result' );
 
 	add_action( 'manage_plugins_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
 	add_action( 'manage_plugins-network_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
@@ -81,10 +83,8 @@ function add_plugin_screen_assets() {
  * Ideally we would just access the data on WP_Plugin_Install_List_Table->items -- if it's exposed when we want it.
  *
  * @param object|WP_Error $res    Response object or WP_Error.
- * @param string          $action The type of information being requested from the Plugin Installation API.
- * @param object          $args   Plugin API arguments.
  */
-function filter_plugins_api_result( $res, $action, $args ) {
+function filter_plugins_api_result( $res ) {
 	global $ptf_plugin_result_tags;
 
 	if ( ! empty( $res->plugins ) && is_array( $res->plugins ) ) {
@@ -139,10 +139,17 @@ function install_plugins_table_header() {
 	<?php
 }
 
+/**
+ * Add in a Tags column to the plugins list table.
+ *
+ * @param array[] $columns The columns to be displayed.
+ *
+ * @return array[]
+ */
 function filter_manage_plugins_columns( $columns ) {
 	$columns = array_merge(
 		array_slice( $columns, 0, 2 ),
-		array( 'tags' => __( 'Tags' ) ),
+		array( 'tags' => __( 'Tags', 'plugin-tag-filters' ) ),
 		array_slice( $columns, 2 )
 	);
 
@@ -162,7 +169,7 @@ function action_manage_plugins_custom_column( $column_name, $plugin_file ) {
 		$tags = get_plugin_tags( $plugin_file );
 		if ( $tags && is_array( $tags ) ) {
 			$tags = array_map( __NAMESPACE__ . '\linkify_tag', $tags );
-			echo implode( ', ', $tags );
+			echo implode( ', ', $tags ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
 	}
 }
@@ -173,7 +180,9 @@ function action_manage_plugins_custom_column( $column_name, $plugin_file ) {
  * @param string[] $views An array of available list table views.
  */
 function views_plugins( $views ) {
+	// phpcs:ignore: WordPress.Security.NonceVerification
 	if ( isset( $_GET['plugin_status'], $_GET['tag'] ) && 'tagged' === $_GET['plugin_status'] ) {
+		// phpcs:ignore: WordPress.Security.NonceVerification
 		$tag = $_GET['tag'];
 
 		$views['all'] = str_replace( ' class="current" aria-current="page"', '', $views['all'] );
@@ -205,6 +214,8 @@ add_action( 'views_plugins', __NAMESPACE__ . '\views_plugins' );
  */
 function linkify_tag( $tag ) {
 	$class = '';
+
+	// phpcs:ignore: WordPress.Security.NonceVerification
 	if ( isset( $_GET['tag'] ) && ( normalize_tag( $_GET['tag'] ) === normalize_tag( $tag ) ) ) {
 		$class = 'active';
 	}
@@ -232,6 +243,12 @@ function linkify_tag( $tag ) {
 
 /**
  * Normalize plugin tags to account for variances in spelling or usage before comparison.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ *
+ * @param string $tag The tag that we are distilling down to a common format.
+ *
+ * @return string
  */
 function normalize_tag( $tag ) {
 	$raw = $tag;
@@ -277,7 +294,7 @@ function normalize_tag( $tag ) {
 	/**
 	 * Give plugins a chance to review the normalization we've done, and apply their own overrides.
 	 */
-	apply_filters( 'normalize_plugin_tag', $tag, $raw );
+	apply_filters( 'ptf_normalize_tag', $tag, $raw );
 
 	return $tag;
 }
@@ -311,6 +328,7 @@ function get_plugin_tags( $plugin ) {
 
 	$package_json = WP_PLUGIN_DIR . '/' . dirname( $plugin ) . '/package.json';
 	if ( file_exists( $package_json ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$package_headers = json_decode( file_get_contents( $package_json ) );
 
 		if ( ! empty( $package_headers->keywords ) ) {
@@ -328,15 +346,16 @@ function get_plugin_tags( $plugin ) {
  */
 function filter_plugins_list( $plugins ) {
 	global $status;
+	// phpcs:ignore: WordPress.Security.NonceVerification
 	if ( isset( $_GET['plugin_status'], $_GET['tag'] ) && 'tagged' === $_GET['plugin_status'] ) {
-		$status            = 'tagged';
-		$tag               = normalize_tag( $_GET['tag'] );
+		$status            = 'tagged'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		$tag               = normalize_tag( $_GET['tag'] ); // phpcs:ignore: WordPress.Security.NonceVerification
 		$plugins['tagged'] = array();
 		foreach ( $plugins['all'] as $plugin => $properties ) {
 			$tags = get_plugin_tags( $plugin );
 			if ( $tags ) {
 				$tags = array_map( __NAMESPACE__ . '\normalize_tag', $tags );
-				if ( in_array( $tag, $tags ) ) {
+				if ( in_array( $tag, $tags, true ) ) {
 					$plugins['tagged'][ $plugin ] = $properties;
 				}
 			}

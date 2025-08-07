@@ -16,7 +16,8 @@
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="ptf"/>
+				<element value="ptf_"/>
+				<element value="PluginTagFilters"/>
 				<element value="plugin_tag_filters"/>
 			</property>
 		</properties>
