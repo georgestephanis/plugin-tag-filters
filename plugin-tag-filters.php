@@ -31,7 +31,7 @@ function on_init() {
 
 	add_filter( 'plugins_list', __NAMESPACE__ . '\filter_plugins_list' );
 }
-add_action ( 'init', __NAMESPACE__ . '\on_init' );
+add_action( 'init', __NAMESPACE__ . '\on_init' );
 
 /**
  * Add in our additional styles to the plugin-install.php screen
@@ -39,7 +39,7 @@ add_action ( 'init', __NAMESPACE__ . '\on_init' );
  * @return void
  */
 function add_plugin_install_screen_assets() {
-	$asset_file = include( plugin_dir_path( __FILE__ ) . 'build/index.asset.php');
+	$asset_file = include plugin_dir_path( __FILE__ ) . 'build/index.asset.php';
 
 	wp_enqueue_script(
 		'plugin-tag-filters',
@@ -64,7 +64,7 @@ function add_plugin_install_screen_assets() {
  * @return void
  */
 function add_plugin_screen_assets() {
-	$asset_file = include( plugin_dir_path( __FILE__ ) . 'build/index.asset.php');
+	$asset_file = include plugin_dir_path( __FILE__ ) . 'build/index.asset.php';
 
 	wp_enqueue_style(
 		'plugin-tag-filters',
@@ -140,13 +140,13 @@ function install_plugins_table_header() {
 }
 
 function filter_manage_plugins_columns( $columns ) {
-    $columns = array_merge(
+	$columns = array_merge(
 		array_slice( $columns, 0, 2 ),
-		[ 'tags' => __( 'Tags' ) ],
+		array( 'tags' => __( 'Tags' ) ),
 		array_slice( $columns, 2 )
 	);
 
-    return $columns;
+	return $columns;
 }
 
 /**
@@ -181,7 +181,15 @@ function views_plugins( $views ) {
 		$views['tagged'] = sprintf(
 			'<a href="%2$s" class="current" aria-current="page">Tagged <span class="count">(%1$s)</span></a>',
 			esc_html( $tag ),
-			esc_url( add_query_arg( array( 'plugin_status' => 'tagged', 'tag' => $tag ), admin_url( 'plugins.php' ) ) )
+			esc_url(
+				add_query_arg(
+					array(
+						'plugin_status' => 'tagged',
+						'tag'           => $tag,
+					),
+					admin_url( 'plugins.php' )
+				)
+			)
 		);
 	}
 	return $views;
@@ -205,7 +213,13 @@ function linkify_tag( $tag ) {
 	if ( 'active' === $class ) {
 		$url = remove_query_arg( array( 'plugin_status', 'tag' ) );
 	} else {
-		$url = add_query_arg( array( 'plugin_status' => 'tagged', 'tag' => $tag ), admin_url( 'plugins.php' ) );
+		$url = add_query_arg(
+			array(
+				'plugin_status' => 'tagged',
+				'tag'           => $tag,
+			),
+			admin_url( 'plugins.php' )
+		);
 	}
 
 	return sprintf(
