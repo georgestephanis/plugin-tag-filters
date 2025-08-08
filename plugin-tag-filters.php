@@ -32,7 +32,6 @@ function on_init() {
 	add_action( 'manage_plugins_custom_column', __NAMESPACE__ . '\action_manage_plugins_custom_column', 10, 2 );
 	add_action( 'views_plugins', __NAMESPACE__ . '\views_plugins' );
 	add_filter( 'plugins_list', __NAMESPACE__ . '\filter_plugins_list' );
-
 }
 add_action( 'init', __NAMESPACE__ . '\on_init' );
 
@@ -83,21 +82,37 @@ function add_plugin_screen_assets() {
  *
  * Ideally we would just access the data on WP_Plugin_Install_List_Table->items -- if it's exposed when we want it.
  *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ *
  * @param object|WP_Error $res    Response object or WP_Error.
  */
 function filter_plugins_api_result( $res ) {
 	global $ptf_plugin_result_tags;
 
 	if ( ! empty( $res->plugins ) && is_array( $res->plugins ) ) {
+		$tag_filter = null;
+		// phpcs:ignore: WordPress.Security.NonceVerification
+		if ( isset( $_GET['tag_filter'] ) ) {
+			// phpcs:ignore: WordPress.Security.NonceVerification
+			$tag_filter = normalize_tag( $_GET['tag_filter'] );
+		}
+
 		if ( ! is_array( $ptf_plugin_result_tags ) ) {
 			$ptf_plugin_result_tags = array();
 		}
 
-		foreach ( $res->plugins as $plugin ) {
+		foreach ( $res->plugins as $i => $plugin ) {
 			$slug = $plugin['slug'];
 			if ( $plugin['tags'] && is_array( $plugin['tags'] ) ) {
-				foreach ( $plugin['tags'] as $tag ) {
+				$tags = $plugin['tags'];
+				foreach ( $tags as $tag ) {
 					$ptf_plugin_result_tags[ $tag ][] = $slug;
+				}
+				if ( $tag_filter ) {
+					$tags_normalized = array_map( __NAMESPACE__ . '\normalize_tag', $tags );
+					if ( ! in_array( $tag_filter, $tags_normalized, true ) ) {
+						unset( $res->plugins[ $i ] );
+					}
 				}
 			} else {
 				$ptf_plugin_result_tags['untagged'][] = $slug;
@@ -126,12 +141,21 @@ function install_plugins_table_header() {
 	<ul class="plugin-table-tag-filters">
 		<?php
 		foreach ( $ptf_plugin_result_tags as $tag => $plugin_slugs ) {
+			$active = null;
+			// phpcs:ignore: WordPress.Security.NonceVerification
+			if ( ! empty( $_GET['tag_filter'] ) ) {
+				// phpcs:ignore: WordPress.Security.NonceVerification
+				$active = $tag === $_GET['tag_filter'] ? 'active' : '';
+			}
+
 			if ( ( 'untagged' === $tag ) || count( $plugin_slugs ) > 1 ) {
 				printf(
-					'<li><a data-slugs="%3$s" href="javascript:;">%1$s (%2$d)</a></li>',
+					'<li><a data-slugs="%3$s" href="%4$s" class="%5$s">%1$s (%2$d)</a></li>',
 					esc_html( $tag ),
 					count( $plugin_slugs ),
-					esc_attr( wp_json_encode( $plugin_slugs ) )
+					esc_attr( wp_json_encode( $plugin_slugs ) ),
+					esc_url( add_query_arg( 'tag_filter', $tag ) ),
+					esc_attr( $active )
 				);
 			}
 		}
