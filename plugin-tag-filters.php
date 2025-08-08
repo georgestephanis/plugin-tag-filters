@@ -30,8 +30,9 @@ function on_init() {
 	add_action( 'manage_plugins_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
 	add_action( 'manage_plugins-network_columns', __NAMESPACE__ . '\filter_manage_plugins_columns' );
 	add_action( 'manage_plugins_custom_column', __NAMESPACE__ . '\action_manage_plugins_custom_column', 10, 2 );
-
+	add_action( 'views_plugins', __NAMESPACE__ . '\views_plugins' );
 	add_filter( 'plugins_list', __NAMESPACE__ . '\filter_plugins_list' );
+
 }
 add_action( 'init', __NAMESPACE__ . '\on_init' );
 
@@ -203,7 +204,6 @@ function views_plugins( $views ) {
 	}
 	return $views;
 }
-add_action( 'views_plugins', __NAMESPACE__ . '\views_plugins' );
 
 /**
  * Generate the link for the installed plugins tag list.  Handle active class as needed.
